@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package sms;
+
+service SMSClassifier {
+  rpc ClassifySingle (SingleSMSRequest) returns (SinglePredictResponse);
+}
+
+message SingleSMSRequest {
+  string mobile = 1;
+  string message = 2;
+}
+
+message ClassificationResult {
+  string mobile = 1;
+  string message = 2;
+  string category = 3;
+  bool is_transactional = 4;
+  float confidence = 5;
+}
+
+message SinglePredictResponse {
+  string status = 1;
+  ClassificationResult result = 2;
+}

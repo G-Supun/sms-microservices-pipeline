@@ -1,0 +1,20 @@
+# Python virtual environments and cache
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Git repository data
+.git/
+.gitignore
+
+# IDE and OS files
+.vscode/
+__MACOSX/
+.DS_Store
+
+# External testing and documentation files
+microservices.postman_collection.json
+README.md
+classify.sql

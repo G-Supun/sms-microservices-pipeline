@@ -1,0 +1,101 @@
+version: "3.8"
+
+x-shared-env: &shared-env
+  DB_HOST: postgres
+  DB_PORT: 5432
+  RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+  GRPC_SERVER_HOST: ml_realtime_service:50051
+  PYTHONUNBUFFERED: 1
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: S@post
+      POSTGRES_DB: practise
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d practise"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s # Gives initdb plenty of time on first boot
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    restart: always
+    environment:
+      HOME: /tmp
+      RABBITMQ_ERLANG_COOKIE: "SECRET_COOKIE_STRING_SMS_WORKER"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 25s
+  # ... (keep postgres and rabbitmq blocks exactly as they are) ...
+
+  api_gateway:
+    build: .
+    working_dir: /app/api_gateway
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      <<: *shared-env
+    volumes:
+      - ./storage:/app/api_gateway/storage
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      ml_realtime_service:
+        condition: service_started
+
+  ml_realtime_service:
+    build: .
+    command: python ml_realtime_service/main.py
+    restart: always
+    ports:
+      - "50051:50051"
+    environment:
+      <<: *shared-env
+
+  ml_batch_worker:
+    build: .
+    command: python ml_batch_worker/main.py
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "3.5"
+          memory: 1.5G
+    environment:
+      <<: *shared-env
+    volumes:
+      - ./storage:/app/storage
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  db_worker:
+    build: .
+    command: python db_worker/main.py
+    restart: always
+    environment:
+      <<: *shared-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

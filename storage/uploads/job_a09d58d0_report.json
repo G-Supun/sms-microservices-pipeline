@@ -1,0 +1,16 @@
+{
+    "job_id": "job_a09d58d0",
+    "status": "completed",
+    "total_records": 148715,
+    "throughput_msgs_sec": 12094.46,
+    "timings": {
+        "total_wall_time_sec": 12.2961,
+        "ml_inference_sec": 9.6422,
+        "db_publish_sec": 1.9091
+    },
+    "hardware": {
+        "peak_ram_mb": 352.95,
+        "peak_cpu_pct": 31.4,
+        "worker_saturation_pct": 159.2
+    }
+}

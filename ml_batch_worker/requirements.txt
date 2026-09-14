@@ -1,0 +1,8 @@
+aio-pika>=9.4.0
+onnxruntime>=1.17.0
+tokenizers>=0.15.0
+numpy>=1.26.0
+pandas>=2.2.0
+psutil>=5.9.0
+pydantic>=2.6.0
+pydantic-settings>=2.2.0

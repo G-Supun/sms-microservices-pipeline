@@ -1,0 +1,16 @@
+{
+    "job_id": "job_19da3493",
+    "status": "completed",
+    "total_records": 148715,
+    "throughput_msgs_sec": 6753.39,
+    "timings": {
+        "total_wall_time_sec": 22.0208,
+        "ml_inference_sec": 19.2884,
+        "db_publish_sec": 1.6457
+    },
+    "hardware": {
+        "peak_ram_mb": 433.96,
+        "peak_cpu_pct": 34.2,
+        "worker_saturation_pct": 150.6
+    }
+}
