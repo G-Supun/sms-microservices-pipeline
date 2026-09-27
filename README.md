@@ -1,16 +1,34 @@
 # SMS Microservices Pipeline
 
-A high-performance, containerized microservices pipeline for batch and real-time SMS classification.
+A high-performance, containerized microservices backend for batch and real-time SMS classification (Transactional vs. Promotional). This system uses an event-driven architecture to process large datasets asynchronously while protecting system memory through safe data chunking.
 
-## Tech Stack
+_Engineered during my AI/ML Engineering Internship at **Adeona Technologies**._
 
-- **API Gateway:** FastAPI routing and telemetry endpoints.
-- **Message Broker:** RabbitMQ for decoupled asynchronous task queuing.
-- **Background Workers:** Python services (`ml_batch_worker`, `db_worker`) handling ONNX model inference and data ingestion.
-- **Database:** PostgreSQL (asyncpg pooled) with persistent Docker volumes.
+## System Architecture
 
-## How to Run
+![Microservices Architecture](docs/architecture.png)
 
-1. Clone the repository.
-2. Build and start the cluster: `docker compose up -d --build`
-3. Access the interactive API documentation at `http://localhost:8000/docs`.
+The pipeline consists of strictly decoupled services communicating via a message broker to ensure high throughput and fault tolerance:
+
+- **API Gateway (FastAPI):** Central entry point for HTTP REST traffic and live hardware telemetry.
+- **Message Broker (RabbitMQ):** Handles reliable asynchronous task queuing with durable queues and auto-purging TTLs.
+- **ML Batch Worker (Python/ONNX):** Consumes queued CSV jobs, chunks datasets (25,000 records/chunk), and executes high-speed inference.
+- **DB Worker (Python/asyncpg):** Consumes classified payloads and executes bulk `COPY`/`INSERT` operations.
+- **Database (PostgreSQL):** Persistent storage utilizing an `asyncpg` connection pool to prevent port exhaustion under high load.
+
+## Core API Endpoints
+
+| Method   | Endpoint                           | Description                                                           |
+| :------- | :--------------------------------- | :-------------------------------------------------------------------- |
+| **POST** | `/api/v1/classify-csv`             | Upload a CSV for async batch classification (returns `202 Accepted`). |
+| **GET**  | `/api/v1/records/metrics/live`     | Live container RAM, host CPU %, and system uptime.                    |
+| **GET**  | `/api/v1/records/stats`            | Transactional vs. promotional message counts and ratios.              |
+| **GET**  | `/api/v1/records/?page=1&limit=10` | Paginated retrieval of classified records.                            |
+
+## How to Run Locally
+
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/G-Supun/sms-microservices-pipeline.git](https://github.com/G-Supun/sms-microservices-pipeline.git)
+   cd sms-microservices-pipeline
+   ```
