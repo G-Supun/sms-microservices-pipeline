@@ -1,0 +1,16 @@
+{
+    "job_id": "job_f2944dc7",
+    "status": "completed",
+    "total_records": 148715,
+    "throughput_msgs_sec": 14361.34,
+    "timings": {
+        "total_wall_time_sec": 10.3552,
+        "ml_inference_sec": 8.6419,
+        "db_publish_sec": 1.1769
+    },
+    "hardware": {
+        "peak_ram_mb": 350.22,
+        "peak_cpu_pct": 34.1,
+        "worker_saturation_pct": 169.3
+    }
+}

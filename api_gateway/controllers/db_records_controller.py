@@ -1,5 +1,7 @@
 import sys
 import os
+import time
+import psutil
 import asyncpg
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel
@@ -9,6 +11,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'
 from shared_libs.config import settings
 
 router = APIRouter(prefix="/records", tags=["Database Records & CRUD"])
+
+# Track when the worker started for uptime metrics
+APP_START_TIME = time.time()
 
 class SMSUpdateModel(BaseModel):
     mobile: Optional[str] = None
@@ -23,6 +28,54 @@ async def get_db_connection():
         host=settings.DB_HOST,
         port=settings.DB_PORT
     )
+
+@router.get("/stats", summary="Get classification statistics")
+async def get_classification_stats():
+    conn = await get_db_connection()
+    try:
+        row = await conn.fetchrow("""
+            SELECT 
+                COUNT(*) as total,
+                COALESCE(SUM(CASE WHEN is_transactional = TRUE THEN 1 ELSE 0 END), 0) as transactional,
+                COALESCE(SUM(CASE WHEN is_transactional = FALSE THEN 1 ELSE 0 END), 0) as promotional
+            FROM sms_classifications
+        """)
+        
+        total = row['total']
+        trans = row['transactional']
+        promo = row['promotional']
+        
+        return {
+            "total_records": total,
+            "transactional": {
+                "count": trans,
+                "percentage": round((trans / total * 100), 2) if total > 0 else 0.0
+            },
+            "promotional": {
+                "count": promo,
+                "percentage": round((promo / total * 100), 2) if total > 0 else 0.0
+            }
+        }
+    finally:
+        await conn.close()
+
+@router.get("/metrics/live", summary="Get live system metrics")
+async def get_live_metrics():
+    # Current process for RAM
+    process = psutil.Process(os.getpid())
+    ram_mb = process.memory_info().rss / (1024 * 1024)
+    
+    # Host CPU percentage
+    cpu_percent = psutil.cpu_percent(interval=0.1)
+    
+    # Uptime in seconds
+    uptime = time.time() - APP_START_TIME
+    
+    return {
+        "container_ram_mb": round(ram_mb, 2),
+        "host_cpu_percent": cpu_percent,
+        "uptime_seconds": round(uptime, 2)
+    }
 
 @router.get("/", summary="Get paginated classification records")
 async def get_paginated_records(
